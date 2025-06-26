@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Naxa Post</title>
+
+  <!-- PWA / favicon 세트 -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/img/logo/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/img/logo/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/img/logo/favicon-16x16.png">
+  <link rel="manifest" href="/static/img/logo/site.webmanifest">
+  <!-- android-chrome N eeds manifest but 추가 해두면 자동 사용 -->
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/quill/dist/quill.snow.css" rel="stylesheet">
+
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <!-- 배경 파티클 -->
+  <div class="particles" id="particles"></div>
+
+  <div class="container">
+    <!-- 헤더 (로고 + 타이틀) -->
+    <header class="header" style="display:flex;flex-direction:column;align-items:center">
+      <!-- logo 이미지 (192×192) -->
+      <img src="/static/img/logo/android-chrome-192x192.png"
+           alt="Naxa Post Logo"
+           style="width:96px;height:96px;margin-bottom:0.5rem">
+      <h1>Naxa Dev Post</h1>
+      <p>Naxa 전용 게시판</p>
+    </header>
+
+    <!-- 통계 -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-number" id="totalPosts">0</div>
+        <div class="stat-label">총 게시<span id="writeTrigger">글</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="todayPosts">0</div>
+        <div class="stat-label">오늘 게시글</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="totalViews">0</div>
+        <div class="stat-label">총 조회수</div>
+      </div>
+    </div>
+
+    <!-- 툴바 -->
+    <div class="toolbar">
+      <div class="search-container">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" class="search-input" id="searchInput" placeholder="게시글 검색…">
+      </div>
+      <!-- <button class="btn btn-primary" id="writeBtn"><i class="fas fa-pen"></i>새 글 작성</button> -->
+      <button class="btn btn-secondary" id="refreshBtn"><i class="fas fa-sync"></i>새로고침</button>
+    </div>
+
+    <!-- 게시글 그리드 -->
+    <div class="post-grid" id="postGrid"></div>
+  </div>
+
+  <!-- 글쓰기 모달 -->
+  <div class="modal" id="writeModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">새 글 작성</h2>
+        <button class="close-btn" id="closeWriteBtn"><i class="fas fa-times"></i></button>
+
+      </div>
+      <div class="modal-body">
+        <form id="postForm">
+          <div class="form-group">
+            <label class="form-label">제목</label>
+            <input type="text" class="form-input" id="titleInput" placeholder="게시글 제목…" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">내용</label>
+            <div id="editor" style="height:300px"></div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;margin-top:1rem">
+            <i class="fas fa-save"></i>게시하기
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 상세 모달 -->
+  <div class="modal" id="detailModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="detailTitle"></h2>
+        <button class="close-btn" id="closeDetailBtn"><i class="fas fa-times"></i></button>
+        <button id="deleteBtn" class="btn btn-danger" style="display:none;margin-right:auto">
+          <i class="fas fa-trash"></i> 삭제
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="post-meta" id="detailMeta" style="margin-bottom:2rem"></div>
+        <div id="detailContent" style="line-height:1.8"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 라이브러리 & 메인 스크립트 -->
+  <script src="https://cdn.jsdelivr.net/npm/quill/dist/quill.min.js"></script>
+  <script>
+  /* ────────── 전역 & 초기화 ────────── */
+  let posts=[], filteredPosts=[], quill;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    initParticles();
+    initQuill();
+    await fetchPosts();
+    bindEvents();
+    updateStats();
+  });
+
+  /* 파티클 */
+  function initParticles(){
+    const wrap = document.getElementById('particles');
+    for(let i=0;i<20;i++){
+      const p=document.createElement('div');
+      p.className='particle';
+      p.style.left=Math.random()*100+'%';
+      p.style.animationDelay=Math.random()*15+'s';
+      p.style.animationDuration=(Math.random()*10+10)+'s';
+      wrap.appendChild(p);
+    }
+  }
+
+  /* Quill 설정 */
+  function initQuill(){
+    quill = new Quill('#editor',{
+      theme:'snow',
+      modules:{ toolbar:[
+        ['bold','italic','underline','strike'],
+        [{list:'ordered'},{list:'bullet'}],
+        ['link','image'],['clean']
+      ]}
+    });
+    /* 이미지 업로드 */
+    quill.getModule('toolbar').addHandler('image',()=>{
+      const inp=document.createElement('input');
+      inp.type='file';inp.accept='image/*';
+      inp.onchange=async()=>{
+        const fd=new FormData();fd.append('image',inp.files[0]);
+        try{
+          const r=await fetch('/api/upload',{method:'POST',body:fd});
+          const {url}=await r.json();
+          quill.insertEmbed(quill.getSelection().index,'image',url);
+        }catch{
+          quill.insertEmbed(
+            quill.getSelection().index,
+            'image',
+            'https://placehold.co/600x400/00897b/ffffff?text=Image'
+          );
+        }
+      };
+      inp.click();
+    });
+  }
+
+  /* API에서 글 목록 가져오기 */
+  async function fetchPosts(){
+    showLoading(true);
+    try{
+      const r = await fetch('/api/posts');
+      posts = await r.json();
+      /* 최신순 정렬(없으면 제거) */
+      posts.sort((a,b)=>new Date(b.created_at||b.createdAt)-new Date(a.created_at||a.createdAt));
+      filteredPosts=[...posts];
+      renderPosts();
+    }catch{
+      notify('게시글을 불러오지 못했습니다.','error');
+    }
+    showLoading(false);
+  }
+
+  /* ---------- 렌더링 ---------- */
+  const PLACEHOLDER = title =>
+    `https://placehold.co/400x200/00897b/ffffff?text=${encodeURIComponent(title.slice(0,12))}`;
+
+  const firstImg = html =>{
+    const m = /<img[^>]+src=["']([^"']+)["']/i.exec(html||'');
+    return m ? m[1] : null;
+  };
+
+  function renderPosts(){
+    const grid = q('#postGrid');
+    if(!grid) return;
+
+    if(!filteredPosts.length){
+      grid.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text-muted)">게시글이 없습니다.</div>';
+      return;
+    }
+
+    grid.innerHTML = filteredPosts.map((p,i)=>{
+      const imgSrc = p.image
+              || (p.imageUrls && p.imageUrls[0])
+              || firstImg(p.content_html)
+              || PLACEHOLDER(p.title);
+
+      const views = p.views ?? p.view ?? p.viewCount ?? 0;
+      const created = p.created_at || p.createdAt;
+
+      return `
+        <article class="post-card" data-id="${p.id}" style="animation-delay:${i*0.1}s">
+          <img src="${imgSrc}" class="post-image" loading="lazy">
+          <div class="post-content">
+            <div class="post-meta">
+              <span class="post-date"><i class="far fa-calendar"></i>${fmtDate(created)}</span>
+              <span class="post-views"><i class="far fa-eye"></i>${fmtNum(views)}</span>
+            </div>
+            <h3 class="post-title">${p.title}</h3>
+            <p class="post-excerpt">${strip(p.content_html).slice(0,120)}...</p>
+          </div>
+        </article>`;
+    }).join('');
+  }
+
+  /* ---------- 통계 ---------- */
+  function updateStats(){
+    const total  = posts.length;
+    const today  = posts.filter(p=>isToday(p.created_at||p.createdAt)).length;
+    const views  = posts.reduce((s,p)=>s+(p.views??p.view??p.viewCount??0),0);
+
+    q('#totalPosts') && (q('#totalPosts').textContent = total);
+    q('#todayPosts') && (q('#todayPosts').textContent = today);
+    q('#totalViews') && (q('#totalViews').textContent = fmtNum(views));
+  }
+
+  /* ---------- 이벤트 바인딩 ---------- */
+  function bindEvents(){
+    /* 검색 */
+    q('#searchInput').oninput = e =>{
+      const qy = e.target.value.toLowerCase().trim();
+      filteredPosts = qy
+        ? posts.filter(p =>
+            p.title.toLowerCase().includes(qy) ||
+            strip(p.content_html).toLowerCase().includes(qy))
+        : [...posts];
+      renderPosts();
+    };
+
+    // q('#writeBtn').onclick      = ()=>openM('writeModal');
+    q('#closeWriteBtn').onclick = ()=>closeM('writeModal');
+    q('#closeDetailBtn').onclick= ()=>closeM('detailModal');
+    q('#postForm').onsubmit     = savePost;
+    q('#postGrid').onclick      = openDetail;
+    q('#refreshBtn').onclick    = async ()=>{await fetchPosts();notify('새로고침 완료','success');};
+    /* 새 글 모달 트리거 ― ‘총 게시글’의 “글” */
+    /* ▲ 삭제 버튼 토글: Shift+D */
+    document.addEventListener('keydown', e=>{
+      if(e.shiftKey && e.key==='D' && q('#detailModal').style.display==='flex'){
+        const dBtn=q('#deleteBtn');
+        dBtn.style.display = dBtn.style.display==='none' || !dBtn.style.display ? 'inline-flex' : 'none';
+      }
+    });
+    /* 실제 삭제 실행 */
+    q('#deleteBtn').onclick = async ()=>{
+      const id = q('#deleteBtn').dataset.id;
+      if(!confirm('정말 삭제할까요?')) return;
+      try{
+        const r=await fetch('/api/posts/'+id,{method:'DELETE'});
+        if(!r.ok) throw 0;
+        closeM('detailModal');
+        await fetchPosts();
+        notify('삭제 완료','success');
+      }catch{ notify('삭제 실패','error'); }
+    };
+    const trigger = document.getElementById('writeTrigger');
+    if (trigger) trigger.addEventListener('click', () => openM('writeModal'));
+    qsAll('.modal').forEach(m=>{
+      m.addEventListener('click',e=>{ if(e.target===m) closeM(m.id); });
+    });
+
+  }
+
+  /* ---------- 글 저장 ---------- */
+  async function savePost(e){
+    e.preventDefault();
+    const title = q('#titleInput').value.trim();
+    const content = quill.root.innerHTML;
+
+    if(!title)            return notify('제목을 입력하세요','error');
+    if(strip(content).length<5) return notify('내용을 5자 이상 입력','error');
+
+    const imageUrls=[...qAll('#editor img')].map(i=>i.src);
+
+    try{
+      const res = await fetch('/api/posts',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({title, contentHtml:content, imageUrls})
+      });
+      if(!res.ok) throw 0;
+
+      await fetchPosts();
+      closeM('writeModal');
+      q('#titleInput').value='';
+      quill.root.innerHTML='';
+      notify('게시글이 등록되었습니다!','success');
+    }catch{
+      notify('저장 실패','error');
+    }
+  }
+
+  /* ---------- 글 상세 ---------- */
+  async function openDetail(e){
+    const card = e.target.closest('.post-card');
+    if(!card) return;
+
+    try{
+      const r = await fetch('/api/posts/'+card.dataset.id);
+      if(!r.ok) throw 0;
+
+      const p = await r.json();
+      await fetchPosts();   // 조회수 업데이트 다시 받아오기
+
+      q('#detailTitle').textContent = p.title;
+      q('#detailMeta').innerHTML = `
+        <span><i class="far fa-calendar"></i>${fmtDate(p.created_at||p.createdAt)}</span>
+        <span style="margin-left:1rem"><i class="far fa-eye"></i>${fmtNum(p.views??p.view??p.viewCount??0)}</span>`;
+      q('#detailContent').innerHTML = p.content_html;
+      // openDetail 안쪽 (버튼 id 세팅 추가)
+      q('#deleteBtn').dataset.id = p.id;   // ← 이 줄을 다시 넣어 주세요
+      q('#deleteBtn').style.display = 'none';
+      openM('detailModal');
+    }catch{
+      notify('게시글을 불러올 수 없습니다.','error');
+    }
+    
+
+  }
+
+  /* ---------- 공통 유틸 ---------- */
+  const q     = s => document.querySelector(s);
+  const qsAll = s => document.querySelectorAll(s);
+  const strip = h => (new DOMParser).parseFromString(h,'text/html').body.textContent||'';
+  const fmtNum= n => n>=1e6 ? (n/1e6).toFixed(1)+'M'
+                  : n>=1e3 ? (n/1e3).toFixed(1)+'K' : n;
+  const isToday = d => new Date(d).toDateString() === new Date().toDateString();
+  const fmtDate = iso=>{
+    const d=new Date(iso), diff=(Date.now()-d)/864e5;
+    if(diff<1) return '오늘';
+    if(diff<2) return '어제';
+    if(diff<7) return `${Math.floor(diff)}일 전`;
+    return d.toLocaleDateString('ko-KR');
+  };
+
+  const openM  = id=>{ q('#'+id).style.display='flex'; document.body.style.overflow='hidden'; };
+  const closeM = id=>{ q('#'+id).style.display='none'; document.body.style.overflow=''; };
+
+  function showLoading(flag){
+    const grid=q('#postGrid');
+    if(!grid) return;
+    grid.innerHTML = flag
+      ? `<div style="display:flex;justify-content:center;padding:3rem">
+           <div class="spinner" style="width:40px;height:40px;border:3px solid rgba(0,137,123,.3);
+                 border-top:3px solid var(--primary);border-radius:50%;animation:spin 1s linear infinite"></div>
+         </div>`
+      : grid.innerHTML;
+  }
+  function notify(msg,type='info'){
+    const n=document.createElement('div');
+    n.textContent=msg;
+    n.style.cssText=`
+      position:fixed;top:2rem;right:2rem;z-index:10000;
+      padding:1rem 1.5rem;border-radius:12px;font-weight:500;
+      background:${type==='success'?'var(--success)':
+                  type==='error'  ?'var(--error)'  :'var(--primary)'};
+      color:#fff;box-shadow:var(--shadow-lg);
+      animation:slideIn .3s,fadeOut .3s 2.7s forwards`;
+    document.body.appendChild(n);
+    setTimeout(()=>n.remove(),3000);
+  }
+  </script>
+</body>
+</html>

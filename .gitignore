@@ -1,0 +1,49 @@
+###############
+# 기본 Node.js #
+###############
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-lock.yaml
+package-lock.json    # 잠금파일을 공유하려면 이 줄 삭제
+
+################
+# 환경 변수 등 #
+################
+.env
+.env.*               # .env.local 등
+
+########
+# 데이터 #
+########
+# SQLite-wal/shm 까지 한 번에 무시
+data/
+*.sqlite*
+*.db
+
+##################
+# 업로드된 파일들 #
+##################
+# 사용자가 올린 원본/리사이즈 이미지
+# static/img/*
+!static/img/logo/    # ⇒ 브랜드 로고만 버전 관리
+
+tmp/                 # multer 임시 업로드 폴더
+
+##########
+# 로그 등 #
+##########
+logs/
+*.log
+
+##############
+# 개발 도구들 #
+##############
+.vscode/
+.idea/
+
+#########
+# OS 잡파일 #
+#########
+.DS_Store
+Thumbs.db

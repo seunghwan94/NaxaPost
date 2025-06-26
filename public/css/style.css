@@ -1,0 +1,298 @@
+/* ──────────  PALLETTE : “Teal Ocean”  ────────── */
+:root{
+  --primary:#00897b;      --primary-dark:#006e63;
+  --secondary:#3dbbd6;    --accent:#ffd54f; --accent2:#ff9472;
+  --success:#25c685;      --warning:#f6b93b; --error:#e74c3c;
+  --bg-primary:#0d0d0d;   --bg-secondary:#141414; --bg-tertiary:#1b1d1d;
+  --surface:rgba(255,255,255,.04);      --surface-hover:rgba(255,255,255,.09);
+  --glass:rgba(255,255,255,.06);        --glass-border:rgba(255,255,255,.12);
+  --text-primary:#f5f6f8; --text-secondary:rgba(245,246,248,.82);
+  --text-muted:rgba(245,246,248,.55);
+  --shadow-lg:0 10px 18px rgba(0,0,0,.3);
+  --shadow-xl:0 24px 36px rgba(0,0,0,.42);
+  --radius-md:12px; --radius-lg:16px; --radius-xl:20px;
+}
+
+/* ──────────  RESET & BACKGROUND  ────────── */
+*{margin:0;padding:0;box-sizing:border-box;
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+
+body{
+  min-height:100vh;
+  background:linear-gradient(135deg,
+      var(--bg-primary) 0%,
+      var(--bg-secondary) 50%,
+      var(--bg-tertiary) 100%);
+  background-attachment:fixed;
+  color:var(--text-primary);
+  overflow-x:hidden;
+  padding:2rem;
+  position:relative;
+}
+
+/* 부드러운 라이트 스팟 */
+body::before{
+  content:'';
+  position:fixed;inset:0;width:200%;height:200%;z-index:-1;
+  background:
+    radial-gradient(circle at 20% 30%,rgba(0,137,123,.16) 0%,transparent 55%),
+    radial-gradient(circle at 75% 80%,rgba(255,213,79,.12) 0%,transparent 55%),
+    radial-gradient(circle at 60% 45%,rgba(255,148,114,.10) 0%,transparent 55%);
+  animation:bgFloat 22s ease-in-out infinite;
+}
+@keyframes bgFloat{
+  0%,100%{transform:translate(0,0)}
+  33%   {transform:translate(-24px,-16px)}
+  66%   {transform:translate(18px,26px)}
+}
+
+/* 파티클 */
+.particles{position:fixed;inset:0;pointer-events:none;z-index:-1}
+.particle{
+  position:absolute;width:4px;height:4px;
+  background:rgba(255,255,255,.07);border-radius:50%;
+  animation:float 16s linear infinite;
+}
+@keyframes float{
+  0%   {transform:translateY(100vh);opacity:0}
+  10%,90%{opacity:.8}
+  100% {transform:translateY(-120px);opacity:0}
+}
+
+/* ──────────  HEADER & TOOLBAR  ────────── */
+h1{
+  font-size:clamp(2.5rem,5vw,4rem);font-weight:800;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:.5rem;
+}
+.header{text-align:center;margin-bottom:3rem;
+        animation:slideDown .8s ease-out}
+@keyframes slideDown{from{transform:translateY(-50px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+.toolbar{
+  display:flex;flex-wrap:wrap;gap:1rem;margin-bottom:2rem;
+  animation:slideUp .8s ease-out .2s both;
+}
+@keyframes slideUp{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* ───── 검색 입력 (Pill) ───── */
+.search-container{
+  flex:1 1 280px;
+  height:48px;
+  position:relative;
+  display:flex;align-items:center;
+  border-radius:9999px;
+}
+.search-container::before{
+  content:'';position:absolute;inset:0;padding:2px;
+  border-radius:inherit;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  mask-composite:xor;
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;
+}
+.search-input{
+  width:100%;height:100%;
+  padding-left:2.8rem;padding-right:1.2rem;
+  border:none;border-radius:9999px;
+  background:var(--glass);
+  backdrop-filter:blur(20px);
+  color:var(--text-primary);
+  font-size:1rem;
+}
+.search-input::placeholder{color:var(--text-muted)}
+.search-input:focus{outline:none;background:var(--surface-hover);transform:scale(1.02)}
+.search-icon{
+  position:absolute;left:1rem;top:50%;transform:translateY(-50%);
+  font-size:1.1rem;color:var(--text-muted);pointer-events:none;
+}
+
+/* ───── 공통 버튼 ───── */
+.btn{
+  position:relative;overflow:hidden;
+  padding:1rem 2rem;border:none;border-radius:50px;
+  font-weight:600;display:flex;align-items:center;gap:.5rem;
+  cursor:pointer;transition:.3s;
+}
+.btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  z-index:-1;transition:.3s;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.btn:hover::before{background:linear-gradient(135deg,var(--primary-dark),var(--accent2))}
+.btn-primary{color:#fff}
+.btn-secondary{
+  background:var(--glass);color:var(--text-primary);
+  border:1px solid var(--glass-border);
+}
+.btn-secondary::before{background:var(--surface-hover)}
+
+.btn-primary:disabled{
+  background:var(--surface)!important;
+  color:var(--text-muted)!important;
+  cursor:not-allowed!important;
+  box-shadow:none!important;
+}
+
+/* ──────────  STAT CARDS  ────────── */
+.stats{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:1rem;margin-bottom:2rem;
+  animation:slideUp .8s ease-out .4s both;
+}
+.stat-card{
+  background:var(--glass);border:1px solid var(--glass-border);
+  border-radius:var(--radius-lg);padding:1.5rem;text-align:center;transition:.3s;
+}
+.stat-card:hover{transform:translateY(-4px);background:var(--surface-hover)}
+.stat-number{
+  font-size:2rem;font-weight:700;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.stat-label{color:var(--text-secondary);font-size:.9rem;margin-top:.3rem}
+
+/* ──────────  POST GRID & CARD  ────────── */
+.post-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.5rem}
+.post-card{
+  background:var(--glass);border:1px solid var(--glass-border);
+  border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:.4s;
+}
+.post-card:hover{transform:translateY(-8px) scale(1.02);box-shadow:var(--shadow-xl);border-color:rgba(0,137,123,.3)}
+.post-image{width:100%;height:200px;object-fit:cover;display:block}
+.post-content{padding:1.5rem}
+.post-meta{display:flex;gap:1rem;font-size:.85rem;color:var(--text-muted);margin-bottom:1rem}
+.post-title{font-size:1.25rem;font-weight:600;margin-bottom:.7rem;color:var(--text-primary)}
+.post-excerpt{color:var(--text-secondary);line-height:1.6;font-size:.95rem}
+
+/* 카드·상세·Quill 안 모든 이미지 리사이즈 */
+.post-content img,.modal-body img,.ql-editor img{
+  max-width:100%;height:auto;border-radius:var(--radius-md)
+}
+
+/* ──────────  MODAL  ────────── */
+.modal{
+  position:fixed;inset:0;padding:1rem;
+  background:rgba(0,0,0,.8);
+  backdrop-filter:blur(20px);
+  display:none;align-items:center;justify-content:center;
+  z-index:1000;
+}
+.modal-content{
+  width:100%;max-width:800px;max-height:90vh;overflow-y:auto;
+  background:var(--bg-secondary);
+  border:1px solid var(--glass-border);
+  border-radius:var(--radius-xl);
+  animation:modalSlide .3s ease-out;
+}
+@keyframes modalSlide{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-header{
+  padding:2rem 2rem 1rem;
+  border-bottom:1px solid var(--glass-border);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.close-btn{
+  background:none;border:none;font-size:1.5rem;color:var(--text-muted);
+  cursor:pointer;padding:.5rem;border-radius:50%;transition:.3s;
+}
+.close-btn:hover{background:var(--surface-hover);color:var(--text-primary)}
+.modal-body{padding:2rem}
+
+/* ──────────  FORM CUSTOM  ────────── */
+.form-label{display:block;margin-bottom:.5rem;font-weight:500;color:var(--text-secondary)}
+.form-input{
+  width:100%;background:var(--glass);color:var(--text-primary);
+  padding:1rem;border:1px solid var(--glass-border);border-radius:var(--radius-md);
+  font-size:1rem;
+}
+.form-input:focus{
+  outline:none;border-color:var(--primary);background:var(--surface-hover);transform:scale(1.01)
+}
+
+/* Quill */
+.ql-toolbar{
+  border:1px solid var(--glass-border)!important;
+  border-radius:var(--radius-md) var(--radius-md) 0 0!important;
+  background:var(--glass)!important;
+}
+.ql-container{
+  border:1px solid var(--glass-border)!important;border-top:none!important;
+  border-radius:0 0 var(--radius-md) var(--radius-md)!important;
+  background:var(--surface)!important;color:var(--text-primary)!important;
+}
+
+/* ──────────  NOTIFICATION  ────────── */
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeOut{to{transform:translateX(100%);opacity:0}}
+
+/* ──────────  SPINNER  ────────── */
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ──────────  SCROLLBAR  ────────── */
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-track{background:var(--bg-secondary)}
+::-webkit-scrollbar-thumb{
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  border-radius:4px;
+}
+::-webkit-scrollbar-thumb:hover{
+  background:linear-gradient(135deg,var(--primary-dark),var(--accent2));
+}
+/* ② 메인 CTA 버튼은 배경 직접 지정해 버린다 */
+.btn-primary{
+  background:linear-gradient(135deg,var(--primary),var(--accent)) !important;
+  color:#fff !important;
+}
+.btn-primary:hover{
+  background:linear-gradient(135deg,var(--primary-dark),var(--accent2)) !important;
+}
+/* 비활성 상태 대비 */
+.btn-primary:disabled{
+  background:var(--surface) !important;
+  color:var(--text-muted) !important;
+  cursor:not-allowed !important;
+  box-shadow:none !important;
+}
+
+/* ③ 투명도가 너무 높아 진한 회색으로 보였던 Quill 편집 영역 */
+.ql-container{
+  background:var(--surface) !important;
+}
+/* ─── Post meta (아이콘 + 텍스트) ───────────────────── */
+.post-meta{
+  display:flex;               /* 한 줄 정렬 */
+  gap:1rem;                   /* 항목 간 여백 */
+  flex-wrap:wrap;             /* 좁은 화면에서 줄바꿈 */
+  font-size:.9rem;
+  color:var(--text-muted);
+}
+
+.post-meta span{              /* 아이콘+텍스트 한 세트 */
+  display:inline-flex;
+  align-items:center;
+  gap:.35rem;                 /* 아이콘-텍스트 간격 */
+}
+
+.post-meta i{                 /* 아이콘 세로정렬 */
+  font-size:.85rem;
+  line-height:1;
+}
+
+/* 숨긴 작성 버튼 */
+#writeBtn{display:none}
+
+/* 트리거는 일반 텍스트처럼 보이게 – 클릭 가능하지만 커서는 그대로 */
+#writeTrigger{
+  cursor: default;           /* 손 모양 NO  */
+  user-select: none;         /* 드래그 안 됨 (선택방지) */
+}
+
+.btn-danger{
+  background:rgba(231,76,60,.12);
+  color:#e74c3c;
+  border:1px solid rgba(231,76,60,.3);
+}
+.btn-danger:hover{background:rgba(231,76,60,.25)}
