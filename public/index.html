@@ -148,25 +148,36 @@
       ]}
     });
     /* 이미지 업로드 */
-    quill.getModule('toolbar').addHandler('image',()=>{
-      const inp=document.createElement('input');
-      inp.type='file';inp.accept='image/*';
-      inp.onchange=async()=>{
-        const fd=new FormData();fd.append('image',inp.files[0]);
-        try{
-          const r=await fetch('/api/upload',{method:'POST',body:fd});
-          const {url}=await r.json();
-          quill.insertEmbed(quill.getSelection().index,'image',url);
-        }catch{
-          quill.insertEmbed(
-            quill.getSelection().index,
-            'image',
-            'https://placehold.co/600x400/00897b/ffffff?text=Image'
-          );
-        }
-      };
-      inp.click();
-    });
+quill.getModule('toolbar').addHandler('image', () => {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.onchange = async () => {
+    if (!inp.files[0]) return;
+    /* 5 MB 초과 → 1280 px, 80 % 로 축소 */
+    const blob = inp.files[0].size > 5 * 1024 * 1024
+               ? await resizeImage(inp.files[0], 1280, 0.8)
+               : inp.files[0];
+
+    const fd = new FormData();
+    fd.append('image', blob, inp.files[0].name.replace(/\.\w+$/, '.jpg'));
+
+    try {
+      const r   = await fetch('/api/upload', { method: 'POST', body: fd });
+      const { url } = await r.json();
+      const pos = quill.getSelection(true).index;
+      quill.insertEmbed(pos, 'image', url);
+      quill.setSelection(pos + 1);
+    } catch {
+      quill.insertEmbed(
+        quill.getSelection().index,
+        'image',
+        'https://placehold.co/600x400/00897b/ffffff?text=Image'
+      );
+    }
+  };
+  inp.click();
+});
   }
 
   /* API에서 글 목록 가져오기 */
@@ -294,7 +305,7 @@
     if(!title)            return notify('제목을 입력하세요','error');
     if(strip(content).length<5) return notify('내용을 5자 이상 입력','error');
 
-    const imageUrls=[...qAll('#editor img')].map(i=>i.src);
+    const imageUrls=[...qsAll('#editor img')].map(i=>i.src);
 
     try{
       const res = await fetch('/api/posts',{
@@ -345,6 +356,7 @@
   /* ---------- 공통 유틸 ---------- */
   const q     = s => document.querySelector(s);
   const qsAll = s => document.querySelectorAll(s);
+ 
   const strip = h => (new DOMParser).parseFromString(h,'text/html').body.textContent||'';
   const fmtNum= n => n>=1e6 ? (n/1e6).toFixed(1)+'M'
                   : n>=1e3 ? (n/1e3).toFixed(1)+'K' : n;
@@ -383,6 +395,31 @@
     document.body.appendChild(n);
     setTimeout(()=>n.remove(),3000);
   }
+/* ---------- 파일 리사이즈 헬퍼 ---------- */
+function resizeImage(file, max = 1280, quality = 0.8) {
+  return new Promise((res, rej) => {
+    if (!file.type.startsWith('image/')) return rej('not-image');
+    const img = new Image();
+    img.onload = () => {
+      let { width: w, height: h } = img;
+      if (Math.max(w, h) > max) {
+        const r = max / Math.max(w, h);
+        w = Math.round(w * r); h = Math.round(h * r);
+      }
+      const canvas = Object.assign(document.createElement('canvas'), { width: w, height: h });
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(
+        b => b ? res(b) : rej('toBlob fail'),
+        'image/jpeg',
+        quality
+      );
+    };
+    img.onerror = rej;
+    const fr = new FileReader();
+    fr.onload = e => { img.src = e.target.result; };
+    fr.readAsDataURL(file);
+  });
+}
   </script>
 </body>
 </html>
